@@ -36,9 +36,9 @@ use pocketmine\Server;
 
 class DiscordWebhookSendTask extends AsyncTask {
 	/** @var Webhook */
-	protected $webhook;
+	protected $webhookUrl;
 	/** @var Message */
-	protected $message;
+	protected $messageJson;
 
 	public function __construct(string $webhookUrl, string $messageJson)
     {
