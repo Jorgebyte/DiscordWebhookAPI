@@ -40,27 +40,33 @@ class DiscordWebhookSendTask extends AsyncTask {
 	/** @var Message */
 	protected $message;
 
-	public function __construct(Webhook $webhook, Message $message){
-		$this->webhook = $webhook;
-		$this->message = $message;
-	}
+	public function __construct(string $webhookUrl, string $messageJson)
+    {
+        $this->webhookUrl = $webhookUrl;
+        $this->messageJson = $messageJson;
+    }
 
-	public function onRun(){
-		$ch = curl_init($this->webhook->getURL());
-		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($this->message));
-		curl_setopt($ch, CURLOPT_POST,true);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
-		$this->setResult([curl_exec($ch), curl_getinfo($ch, CURLINFO_RESPONSE_CODE)]);
-		curl_close($ch);
-	}
+    public function onRun(): void
+    {
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $this->webhookUrl);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $this->messageJson);
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        $result = curl_exec($curl);
+        $responseCode = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+        curl_close($curl);
+        $this->setResult([$result, $responseCode]);
+    }
 
-	public function onCompletion(Server $server){
-		$response = $this->getResult();
-		if(!in_array($response[1], [200, 204])){
-			$server->getLogger()->error("[DiscordWebhookAPI] Got error ({$response[1]}): " . $response[0]);
-		}
-	}
+    public function onCompletion(): void
+    {
+        $response = $this->getResult();
+        if (!in_array($response[1], [200, 204])) {
+            Server::getInstance()->getLogger()->error("[DiscordWebhookAPI] Got error ({$response[1]}): " . $response[0]);
+        }
+    }
 }
